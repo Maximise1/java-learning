@@ -1,0 +1,7 @@
+*.iml
+.kotlin
+xcuserdata
+!src/**/build/
+logs/
+target/
+local.properties
