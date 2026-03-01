@@ -3,12 +3,15 @@ package ru.aston.hometask.model;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
@@ -41,15 +44,29 @@ public class User {
 
     @NotNull
     @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     protected User() {}
 
-    public User(String email, String name, Integer age) {
+    public User(String email, String name, Integer age, Long id, LocalDateTime createdAt) {
         this.age = age;
-        this.createdAt = Instant.now();
+        this.createdAt = createdAt;
         this.email = email;
         this.name = name;
+        this.id = id;
+    }
+
+    public User(String email, String name, Integer age) {
+        this.email = email;
+        this.name = name;
+        this.age = age;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 
     public Long getId() {
@@ -64,7 +81,7 @@ public class User {
         this.email = email;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 

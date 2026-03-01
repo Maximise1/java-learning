@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import ru.aston.hometask.dao.UserDao;
 import ru.aston.hometask.dao.UserDaoImpl;
 import ru.aston.hometask.model.User;
+import ru.aston.hometask.service.UserService;
 import ru.aston.hometask.ui.ConsoleUi;
 
 public class Main {
@@ -20,7 +21,8 @@ public class Main {
                 .addAnnotatedClass(User.class)
                 .buildSessionFactory();
         UserDao userDao = new UserDaoImpl(sessionFactory);
-        ConsoleUi ui = new ConsoleUi(userDao);
+        UserService service = new UserService(userDao);
+        ConsoleUi ui = new ConsoleUi(service);
 
         logger.debug("Классы успешно созданы. Запуск основного цикла приложения.");
         ui.runApp();
