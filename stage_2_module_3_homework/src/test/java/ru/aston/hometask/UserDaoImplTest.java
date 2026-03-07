@@ -2,7 +2,7 @@ package ru.aston.hometask;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -10,13 +10,23 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import ru.aston.hometask.dao.UserDao;
 import ru.aston.hometask.dao.UserDaoImpl;
+import ru.aston.hometask.dao.UserNotFoundException;
 import ru.aston.hometask.model.User;
 
+@Testcontainers
 public class UserDaoImplTest {
 
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("test-db")
+            .withUsername("test")
+            .withPassword("test");
     private static SessionFactory sessionFactory;
     private UserDao userDao;
 
@@ -24,6 +34,11 @@ public class UserDaoImplTest {
     static void setUp() {
         sessionFactory = new Configuration()
                 .addAnnotatedClass(User.class)
+                .setProperty("hibernate.connection.url", postgres.getJdbcUrl())
+                .setProperty("hibernate.connection.username", postgres.getUsername())
+                .setProperty("hibernate.connection.password", postgres.getPassword())
+                .setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
+                .setProperty("hibernate.hbm2ddl.auto", "create-drop")
                 .buildSessionFactory();
     }
 
@@ -42,7 +57,9 @@ public class UserDaoImplTest {
         User user = new User(
                 "test@mail.com",
                 "Имя",
-                100
+                100,
+                null,
+                null
         );
 
         userDao.create(user);
@@ -53,9 +70,12 @@ public class UserDaoImplTest {
 
     @Test
     void when_updateCalled_then_shouldModifyExistingUser() {
-        User user = new User("old@mail.com",
+        User user = new User(
+                "old@mail.com",
                 "Имя",
-                100
+                100,
+                null,
+                null
         );
 
         userDao.create(user);
@@ -69,18 +89,25 @@ public class UserDaoImplTest {
     }
 
     @Test
-    void delete_shouldRemoveUser() {
-        User user = new User("old@mail.com",
+    void when_deleteCalled_then_shouldRemoveUser() {
+        User user = new User(
+                "old@mail.com",
                 "Имя",
-                100);
+                100,
+                null,
+                null
+        );
 
         userDao.create(user);
         Long id = user.getId();
 
-        userDao.delete(user);
+        userDao.deleteById(id);
 
-        User deleted = userDao.getById(id);
-
-        assertNull(deleted);
+        assertThrows(
+                UserNotFoundException.class,
+                () -> {
+                    userDao.getById(id);
+                }
+        );
     }
 }
