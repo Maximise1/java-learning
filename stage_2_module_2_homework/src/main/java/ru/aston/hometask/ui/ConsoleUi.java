@@ -5,17 +5,19 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Scanner;
 
-import ru.aston.hometask.dao.UserDao;
-import ru.aston.hometask.model.User;
+import ru.aston.hometask.dao.UserNotFoundException;
+import ru.aston.hometask.service.UserDto;
+import ru.aston.hometask.service.UserService;
+import ru.aston.hometask.service.UserValidationException;
 
 public class ConsoleUi {
 
-    private final UserDao userDao;
+    private final UserService userService;
     private final Scanner scanner = new Scanner(System.in);
     private static final Logger logger = LoggerFactory.getLogger(ConsoleUi.class);
 
-    public ConsoleUi(UserDao userDao) {
-        this.userDao = userDao;
+    public ConsoleUi(UserService userService) {
+        this.userService = userService;
     }
 
     public void runApp() {
@@ -30,51 +32,19 @@ public class ConsoleUi {
                     break appLoop;
 
                 case "create":
-                    try {
-                        String name = args[1];
-                        Integer age = Integer.parseInt(args[2]);
-                        String email = args[3];
-                        User newUser = new User(
-                                email,
-                                name,
-                                age
-                        );
-                        userDao.create(newUser);
-                    } catch (RuntimeException e) {
-                        System.out.println("Ошибка при создании пользователя.");
-                    }
-
+                    createUser(args);
                     break;
 
                 case "read":
-                    Long id = Long.parseLong(args[1]);
-                    try {
-                        User user = userDao.getById(id);
-                        System.out.println("User found: id = " + user.getId()
-                                + "; name = " + user.getName() + "; email = " + user.getEmail()
-                                + "; age = " + user.getAge() + "; createdAt = " + user.getCreatedAt());
-                    } catch (RuntimeException e) {
-                        System.out.println("Ошибка при чтении пользователя.");
-                    }
+                    readUser(args);
                     break;
 
                 case "update":
-                    try {
-                        User userToUpdate = userDao.getById(Long.parseLong(args[1]));
-                        updateField(userToUpdate, args[1], args[2]);
-                        userDao.update(userToUpdate);
-                    } catch (RuntimeException e) {
-                        System.out.println("Ошибка при изменении пользователя.");
-                    }
+                    updateUser(args);
                     break;
 
                 case "delete":
-                    try {
-                        User userToDelete = userDao.getById(Long.parseLong(args[1]));
-                        userDao.delete(userToDelete);
-                    } catch (RuntimeException e) {
-                        System.out.println("Ошибка при удалении пользователя.");
-                    }
+                    deleteUser(args);
                     break;
 
                 case "help":
@@ -90,6 +60,105 @@ public class ConsoleUi {
         logger.debug("Выход из главного цикла приложения.");
     }
 
+    private void createUser(String[] args) {
+        try {
+            if (args.length < 4) {
+                System.out.println("Недостаточно аргументов. Использование: create <Name> <Age> <Email>");
+                return;
+            }
+
+            String name = args[1];
+            Integer age = Integer.parseInt(args[2]);
+            String email = args[3];
+
+            UserDto newUser = new UserDto(email, age, name);
+            userService.createUser(newUser);
+            System.out.println("Пользователь успешно создан.");
+
+        } catch (UserValidationException e) {
+            System.out.println("Ошибка валидации: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Некорректный формат возраста.");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Недостаточно аргументов.");
+        } catch (Exception e) {
+            System.out.println("Неожиданная ошибка при создании пользователя.");
+            logger.error("Unexpected error during user creation", e);
+        }
+    }
+
+    private void readUser(String[] args) {
+        try {
+            if (args.length < 2) {
+                System.out.println("Использование: read <id>");
+                return;
+            }
+
+            Long id = Long.parseLong(args[1]);
+            UserDto user = userService.getUserById(id);
+            System.out.println("User found: name = " + user.getName() +
+                    "; email = " + user.getMail() +
+                    "; age = " + user.getAge() +
+                    "; created = " + user.getCreatedAt());
+
+        } catch (UserNotFoundException e) {
+            System.out.println("Пользователь не найден.");
+        } catch (NumberFormatException e) {
+            System.out.println("Некорректный формат ID.");
+        } catch (Exception e) {
+            System.out.println("Ошибка при чтении пользователя.");
+            logger.error("Unexpected error during user read", e);
+        }
+    }
+
+    private void updateUser(String[] args) {
+        try {
+            if (args.length < 4) {
+                System.out.println("Использование: update <id> <field> <value>");
+                return;
+            }
+
+            Long id = Long.parseLong(args[1]);
+            UserDto userToUpdate = userService.getUserById(id);
+            userToUpdate = updateField(userToUpdate, args[2], args[3]);
+            userService.updateUser(userToUpdate);
+            System.out.println("Пользователь успешно обновлен.");
+
+        } catch (UserNotFoundException e) {
+            System.out.println("Пользователь не найден.");
+        } catch (UserValidationException e) {
+            System.out.println("Ошибка валидации: " + e.getMessage());
+        } catch (InvalidFieldException e) {
+            System.out.println("Некорректное поле: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Некорректный формат данных.");
+        } catch (Exception e) {
+            System.out.println("Ошибка при изменении пользователя.");
+            logger.error("Unexpected error during user update", e);
+        }
+    }
+
+    private void deleteUser(String[] args) {
+        try {
+            if (args.length < 2) {
+                System.out.println("Использование: delete <id>");
+                return;
+            }
+
+            Long id = Long.parseLong(args[1]);
+            userService.deleteUserById(id);
+            System.out.println("Пользователь успешно удален.");
+
+        } catch (UserNotFoundException e) {
+            System.out.println("Пользователь не найден.");
+        } catch (NumberFormatException e) {
+            System.out.println("Некорректный формат ID.");
+        } catch (Exception e) {
+            System.out.println("Ошибка при удалении пользователя.");
+            logger.error("Unexpected error during user deletion", e);
+        }
+    }
+
     private void printHelp() {
         System.out.println("Команды:");
         System.out.println("exit - выйти из приложения");
@@ -100,12 +169,36 @@ public class ConsoleUi {
         System.out.println("delete <id> - удалить пользователя\n");
     }
 
-    private void updateField(User userToUpdate, String field, String value) {
+    private UserDto updateField(UserDto userToUpdate, String field, String value) {
         switch (field) {
-            case "email" -> userToUpdate.setEmail(value);
-            case "name" -> userToUpdate.setName(value);
-            case "age" -> userToUpdate.setAge(Integer.parseInt(value));
-            default -> System.out.println("Unrecognized field: " + field);
+            case "email" -> {
+                return new UserDto(
+                        value,
+                        userToUpdate.getAge(),
+                        userToUpdate.getName(),
+                        userToUpdate.getId(),
+                        userToUpdate.getCreatedAt()
+                ) ;
+            }
+            case "name" -> {
+                return new UserDto(
+                        userToUpdate.getMail(),
+                        userToUpdate.getAge(),
+                        value,
+                        userToUpdate.getId(),
+                        userToUpdate.getCreatedAt()
+                );
+            }
+            case "age" -> {
+                return new UserDto(
+                        userToUpdate.getMail(),
+                        Integer.parseInt(value),
+                        userToUpdate.getName(),
+                        userToUpdate.getId(),
+                        userToUpdate.getCreatedAt()
+                );
+            }
+            default -> throw new InvalidFieldException(field);
         }
     }
 }
