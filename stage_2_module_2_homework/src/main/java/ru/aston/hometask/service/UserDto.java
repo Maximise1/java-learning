@@ -3,22 +3,24 @@ package ru.aston.hometask.service;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
+import ru.aston.hometask.exceptions.UserValidationException;
+
 public class UserDto {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    private final String mail;
-    private final Integer age;
-    private final String name;
-    private Long id;
+    private String mail;
+    private Integer age;
+    private String name;
     private LocalDateTime createdAt;
 
-    public UserDto(String mail, Integer age, String name, Long id, LocalDateTime createdAt) {
+    public UserDto() {}
+
+    public UserDto(String mail, Integer age, String name, LocalDateTime createdAt) {
         validateFields(mail, age, name);
 
         this.mail = mail;
         this.age = age;
         this.name = name;
-        this.id = id;
         this.createdAt = createdAt;
     }
 
@@ -52,10 +54,6 @@ public class UserDto {
 
     public String getMail() {
         return mail;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -5,3 +5,5 @@ xcuserdata
 logs/
 target/
 local.properties
+.idea
+build/

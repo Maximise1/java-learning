@@ -1,4 +1,4 @@
-package ru.aston.hometask.dao;
+package ru.aston.hometask.exceptions;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String message) {

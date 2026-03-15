@@ -1,6 +1,7 @@
 package ru.aston.hometask.model;
 
 import org.hibernate.annotations.Nationalized;
+import org.hibernate.annotations.NaturalId;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class User {
 
     @Email
     @NotNull
+    @NaturalId
     @Column(nullable = false)
     private String email;
 
@@ -48,12 +50,11 @@ public class User {
 
     protected User() {}
 
-    public User(String email, String name, Integer age, Long id, LocalDateTime createdAt) {
+    public User(String email, String name, Integer age, LocalDateTime createdAt) {
         this.age = age;
         this.createdAt = createdAt;
         this.email = email;
         this.name = name;
-        this.id = id;
     }
 
     public User(String email, String name, Integer age) {
