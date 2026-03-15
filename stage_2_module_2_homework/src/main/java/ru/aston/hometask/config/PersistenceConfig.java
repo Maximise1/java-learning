@@ -17,7 +17,7 @@ import java.util.Properties;
 import javax.sql.DataSource;
 
 import jakarta.persistence.EntityManagerFactory;
-import ru.aston.hometask.dao.UserRepository;
+import ru.aston.hometask.repository.UserRepository;
 
 @Configuration
 @EnableJpaRepositories(basePackageClasses = UserRepository.class)
@@ -49,7 +49,7 @@ public class PersistenceConfig {
         LocalContainerEntityManagerFactoryBean em =
                 new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("ru.aston.hometask.model");
+        em.setPackagesToScan("ru.aston.hometask.repository.model");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

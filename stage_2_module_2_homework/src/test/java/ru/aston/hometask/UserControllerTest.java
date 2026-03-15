@@ -1,6 +1,7 @@
 package ru.aston.hometask;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,7 +29,7 @@ import java.time.LocalDateTime;
 import ru.aston.hometask.controller.UserController;
 import ru.aston.hometask.exceptions.GlobalExceptionHandler;
 import ru.aston.hometask.exceptions.UserNotFoundException;
-import ru.aston.hometask.service.UserDto;
+import ru.aston.hometask.service.dto.UserDto;
 import ru.aston.hometask.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,13 +52,13 @@ public class UserControllerTest {
     }
 
     @Test
-    void when_createUserCalled_then_returns200() throws Exception {
+    void when_createUserCalled_then_returns201() throws Exception {
         UserDto dto = new UserDto("test@mail.com", 25, "Имя");
 
         mockMvc.perform(post("/users")
                 .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
+                .andExpect(status().is(201));
 
         verify(userService).createUser(any(UserDto.class));
     }
@@ -78,18 +79,18 @@ public class UserControllerTest {
     void when_updateUserCalled_then_returns200() throws Exception {
         UserDto dto = new UserDto("test@mail.com", 25, "Name", LocalDateTime.now());
 
-        mockMvc.perform(put("/users")
+        mockMvc.perform(put("/users/test@mail.com")
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
-        verify(userService).updateUser(any(UserDto.class));
+        verify(userService).updateUser(eq("test@mail.com"), any(UserDto.class));
     }
 
     @Test
-    void when_deleteUserCalled_then_returns200() throws Exception {
+    void when_deleteUserCalled_then_returns204() throws Exception {
         mockMvc.perform(delete("/users/test@mail.com"))
-                .andExpect(status().isOk());
+                .andExpect(status().is(204));
 
         verify(userService).deleteUserByEmail("test@mail.com");
     }

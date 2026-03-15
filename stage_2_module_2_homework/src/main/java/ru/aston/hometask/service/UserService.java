@@ -4,10 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 import jakarta.transaction.Transactional;
-import ru.aston.hometask.dao.UserRepository;
+import ru.aston.hometask.exceptions.UserValidationException;
+import ru.aston.hometask.repository.UserRepository;
 import ru.aston.hometask.exceptions.UserNotFoundException;
-import ru.aston.hometask.model.User;
+import ru.aston.hometask.repository.model.User;
+import ru.aston.hometask.service.dto.UserDto;
 
 @Service
 public class UserService {
@@ -19,30 +23,36 @@ public class UserService {
     }
 
     @Transactional
-    public void createUser(UserDto dto) {
-        User user = mapDtoToUser(dto);
-        userRepository.save(user);
+    public UserDto createUser(UserDto dto) {
+        if (userRepository.existsByEmail(dto.getMail())) {
+            throw new UserValidationException("Email already in use: " + dto.getMail());
+        }
+        User saved = userRepository.save(new User(dto.getMail(), dto.getName(), dto.getAge()));
+        return mapUserToDto(saved);
     }
 
     @Transactional
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
-        return new UserDto(
-                user.getEmail(),
-                user.getAge(),
-                user.getName(),
-                user.getCreatedAt()
-        );
+        return mapUserToDto(user);
     }
 
     @Transactional
-    public void updateUser(UserDto dto) {
-        User user = mapDtoToUser(dto);
-        userRepository.save(user);
+    public UserDto updateUser(String email, UserDto dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
+
+        if (!Objects.equals(user.getName(), dto.getName())) {
+            user.setName(dto.getName());
+        }
+        if (!Objects.equals(user.getAge(), dto.getAge())) {
+            user.setAge(dto.getAge());
+        }
+
+        return mapUserToDto(user);
     }
 
-    @Transactional
     private User mapDtoToUser(UserDto dto) {
         if (dto.getCreatedAt() == null) {
             return new User(
@@ -60,11 +70,14 @@ public class UserService {
         }
     }
 
+    private UserDto mapUserToDto(User user) {
+        return new UserDto(user.getEmail(), user.getAge(), user.getName(), user.getCreatedAt());
+    }
+
     @Transactional
     public void deleteUserByEmail(String email) {
-        long deletedRows = userRepository.deleteByEmail(email);
-        if (deletedRows < 1) {
-            logger.warn("Failed to delete user with email: {}", email);
+        if (userRepository.deleteByEmail(email) < 1) {
+            throw new UserNotFoundException(email);
         }
     }
 }

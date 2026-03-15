@@ -28,7 +28,7 @@ http://localhost:8080
 3. Запустить контейнер
 
 ```
-docker run --name pg \                                                  
+docker run --name pg \                                                        
   -e POSTGRES_DB=mydb \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=veryHardPassword \
@@ -47,17 +47,62 @@ CREATE TABLE users (
     age       INTEGER,
     createdat TIMESTAMP
 );
-CREATE TABLE
 ```
 
 5. Скопировать .war приложения в нужную директорию
 
 ```
-sudo cp build/libs/your-project.war /var/lib/tomcat10/webapps/
+sudo cp build/libs/Stage_2_module_4_homework.war /var/lib/tomcat10/webapps/
 ```
 
 6. Проверить работу программы
 
 ```
-curl http://localhost:8080/Stage_2_module_4_homework/users/test@mail.com 
+# Happy path
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"john@mail.com","name":"John","age":30}'
+
+# Missing name (validation error → 400)
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"john@mail.com","age":30}'
+
+# Invalid email format (validation error → 400)
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"not-an-email","name":"John","age":30}'
+
+# Age out of range (validation error → 400)
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"john@mail.com","name":"John","age":200}'
+
+# Duplicate email (validation error → 400)
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"john@mail.com","name":"John","age":30}'
+
+# Null age — should be allowed since @NotNull is only on email/name
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{"mail":"noage@mail.com","name":"NoAge"}'
+
+# Empty body (→ 400)
+curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+  -H "Content-Type: application/json" \
+  -d '{}'
+ 
+ 
+# Happy path — fetch the user created above
+curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/john@mail.com
+
+# URL-encode the @ sign (use if your shell or proxy requires it)
+curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/john%40mail.com
+
+# Non-existent user (→ 404)
+curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/ghost@mail.com
+
+# Malformed path (→ 400 or 404 depending on routing)
+curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/not-an-email
 ```

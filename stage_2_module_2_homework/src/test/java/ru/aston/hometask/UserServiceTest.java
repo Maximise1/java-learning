@@ -3,6 +3,7 @@ package ru.aston.hometask;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,10 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import ru.aston.hometask.dao.UserRepository;
+import ru.aston.hometask.repository.UserRepository;
 import ru.aston.hometask.exceptions.UserNotFoundException;
-import ru.aston.hometask.model.User;
-import ru.aston.hometask.service.UserDto;
+import ru.aston.hometask.repository.model.User;
+import ru.aston.hometask.service.dto.UserDto;
 import ru.aston.hometask.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +39,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void when_getUserByIdCalled_then_ReturnsUserDto() {
+    void when_getUserByEmailCalled_then_ReturnsUserDto() {
         User user = new User(
                 "email@mail.ru",
                 "Name",
@@ -57,21 +58,28 @@ public class UserServiceTest {
     }
 
     @Test
-    void when_updateUserCalled_then_UserPassedToDao() {
-        UserDto dto = new UserDto(
-                "test@mail.ru",
-                100,
-                "Name",
-                LocalDateTime.now()
+    void when_userNotFound_then_exceptionThrown() {
+
+        when(repository.findByEmail("missing@mail.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> service.getUserByEmail("missing@mail.com")
         );
+    }
 
-        service.updateUser(dto);
-        verify(repository).save(userCaptor.capture());
-        User updatedUser = userCaptor.getValue();
+    @Test
+    void updateUser_whenUserNotFound_throwsUserNotFoundException() {
+        UserDto userDto = new UserDto(
+                "missing@mail.ru",
+                100,
+                "Name"
+        );
+        when(repository.findByEmail("missing@mail.ru")).thenReturn(Optional.empty());
 
-        assertNotNull(updatedUser);
-        assertEquals("Name", updatedUser.getName());
-        assertEquals("test@mail.ru", updatedUser.getEmail());
+        assertThrows(UserNotFoundException.class,
+                () -> service.updateUser("missing@mail.ru", userDto));
     }
 
     @Test
@@ -81,8 +89,10 @@ public class UserServiceTest {
                 100,
                 "Name"
         );
+        when(repository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.createUser(userDto);
+
         verify(repository).save(userCaptor.capture());
         User userToCreate = userCaptor.getValue();
 
@@ -93,20 +103,10 @@ public class UserServiceTest {
 
     @Test
     void when_deleteUserCalled_then_repositoryMethodCalled() {
+        when(repository.deleteByEmail("mail@test.com")).thenReturn(1L);
+
         service.deleteUserByEmail("mail@test.com");
 
         verify(repository).deleteByEmail("mail@test.com");
-    }
-
-    @Test
-    void when_userNotFound_then_exceptionThrown() {
-
-        when(repository.findByEmail("missing@mail.com"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> service.getUserByEmail("missing@mail.com")
-        );
     }
 }

@@ -23,8 +23,8 @@ import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 import ru.aston.hometask.config.PersistenceConfig;
-import ru.aston.hometask.dao.UserRepository;
-import ru.aston.hometask.model.User;
+import ru.aston.hometask.repository.UserRepository;
+import ru.aston.hometask.repository.model.User;
 
 @Testcontainers
 @ExtendWith(SpringExtension.class)
