@@ -14,11 +14,11 @@ import ru.aston.hometask.repository.model.User;
 import ru.aston.hometask.service.dto.UserDto;
 
 @Service
-public class UserService {
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    public UserService(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -27,7 +27,7 @@ public class UserService {
         if (userRepository.existsByEmail(dto.getMail())) {
             throw new UserValidationException("Email already in use: " + dto.getMail());
         }
-        User saved = userRepository.save(new User(dto.getMail(), dto.getName(), dto.getAge()));
+        User saved = userRepository.save(mapDtoToUser(dto));
         return mapUserToDto(saved);
     }
 

@@ -1,4 +1,4 @@
-package ru.aston.hometask;
+package ru.aston.hometask.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 import ru.aston.hometask.config.PersistenceConfig;
-import ru.aston.hometask.repository.UserRepository;
 import ru.aston.hometask.repository.model.User;
 
 @Testcontainers

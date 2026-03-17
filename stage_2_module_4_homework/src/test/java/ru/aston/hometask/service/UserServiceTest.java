@@ -1,4 +1,4 @@
-package ru.aston.hometask;
+package ru.aston.hometask.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,7 +22,6 @@ import ru.aston.hometask.repository.UserRepository;
 import ru.aston.hometask.exceptions.UserNotFoundException;
 import ru.aston.hometask.repository.model.User;
 import ru.aston.hometask.service.dto.UserDto;
-import ru.aston.hometask.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -35,7 +34,7 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(repository);
+        service = new UserServiceImpl(repository);
     }
 
     @Test

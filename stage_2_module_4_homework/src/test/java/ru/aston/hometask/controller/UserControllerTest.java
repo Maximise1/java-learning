@@ -1,4 +1,4 @@
-package ru.aston.hometask;
+package ru.aston.hometask.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 
-import ru.aston.hometask.controller.UserController;
 import ru.aston.hometask.exceptions.GlobalExceptionHandler;
 import ru.aston.hometask.exceptions.UserNotFoundException;
 import ru.aston.hometask.service.dto.UserDto;

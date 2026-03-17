@@ -21,8 +21,11 @@ import ru.aston.hometask.repository.UserRepository;
 
 @Configuration
 @EnableJpaRepositories(basePackageClasses = UserRepository.class)
+@PropertySource(
+        value = "classpath:application.yaml",
+        factory = YamlPropertySourceFactory.class
+)
 @EnableTransactionManagement
-@PropertySource("classpath:application.properties")
 public class PersistenceConfig {
 
     @Bean
