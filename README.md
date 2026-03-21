@@ -1,31 +1,30 @@
-# Stage 2 Task 4
+# Stage 2 Task 5
 
-Добавить в user-service поддержку Spring и разработать API, которое позволит управлять данными.
+Реализовать микросервис(notification-service) для отправки сообщения на почту при удалении или добавлении пользователя.
 
 ### Требования:
 
-1. Использовать необходимые модули spring(boot, web, data etc).
-2. Реализовать api для получения, создания, обновления и удаления юзера. Важно, entity не должен возвращаться из контроллера, необходимо использовать dto.
-3. Заменить Hibernate на Spring data JPA.
-4. Написать тесты для API(можно делать это при помощи mockMvc или других средств)
+1. Использовать необходимые модули spring и kafka.
+2. При удалении или создании юзера приложение, реализованное до этого(user-service), должно отправлять сообщение в kafka, в котором содержится информация об операции(удаление или создание) и email юзера.
+3. Новый микросервис(notification-service) должен получить сообщение из kafka и отправить сообщение на почту юзера в зависимости от операции: удаление - Здравствуйте! Ваш аккаунт был удалён. Создание - Здравствуйте! Ваш аккаунт на сайте ваш сайт был успешно создан.
+4. Также отдельно добавить API, которая будет отправлять сообщение на почту(почти тот же функционал, что и через кафку).
+5. Написать интеграционные тесты для проверки отправки сообщения на почту.
 
 ### Запуск проекта
 
-1. Установить Tomcat
+1. Запустить Mailhog
 
 ```
-sudo apt update
-sudo apt install tomcat10
-sudo systemctl start tomcat10
+docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog
 ```
 
-2. Проверить установку
+2. Запустить Kafka
 
 ```
-http://localhost:8080
+docker run -p 9092:9092 apache/kafka
 ```
 
-3. Запустить контейнер
+3. Запустить контейнер c бд
 
 ```
 docker run --name pg \                                                        
@@ -36,73 +35,30 @@ docker run --name pg \
   -d postgres
 ```
 
-4. Создать таблицу
+4. Перейти в папку с проектом notification-service, собрать jar-ник и запустить его:
 
 ```
-docker exec -it <container_id> psql -U postgres -d mydb
-CREATE TABLE users (
-    id        BIGSERIAL PRIMARY KEY,
-    email     VARCHAR(255) NOT NULL,
-    name      VARCHAR(50)  NOT NULL,
-    age       INTEGER,
-    createdat TIMESTAMP
-);
+./gradlew clean build
+java -jar build/libs/notification-service.jar
 ```
 
-5. Скопировать .war приложения в нужную директорию
+5. Перейти в папку с проектом user-service, собрать jar-ник и запустить его:
 
 ```
-sudo cp build/libs/Stage_2_module_4_homework.war /var/lib/tomcat10/webapps/
+mvn package
+java -jar target/user-service-1.0-SNAPSHOT.jar
 ```
 
-6. Проверить работу программы
+6. Отправить запрос:
 
 ```
-# Happy path
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
+curl -X POST <скопировать_из_консоли>/users \         
   -H "Content-Type: application/json" \
   -d '{"mail":"john@mail.com","name":"John","age":30}'
+```
 
-# Missing name (validation error → 400)
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{"mail":"john@mail.com","age":30}'
+7. Проверить, пришло ли письмо:
 
-# Invalid email format (validation error → 400)
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{"mail":"not-an-email","name":"John","age":30}'
-
-# Age out of range (validation error → 400)
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{"mail":"john@mail.com","name":"John","age":200}'
-
-# Duplicate email (validation error → 400)
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{"mail":"john@mail.com","name":"John","age":30}'
-
-# Null age — should be allowed since @NotNull is only on email/name
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{"mail":"noage@mail.com","name":"NoAge"}'
-
-# Empty body (→ 400)
-curl -X POST http://localhost:8080/Stage_2_module_4_homework/users \
-  -H "Content-Type: application/json" \
-  -d '{}'
- 
- 
-# Happy path — fetch the user created above
-curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/john@mail.com
-
-# URL-encode the @ sign (use if your shell or proxy requires it)
-curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/john%40mail.com
-
-# Non-existent user (→ 404)
-curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/ghost@mail.com
-
-# Malformed path (→ 400 or 404 depending on routing)
-curl -X GET http://localhost:8080/Stage_2_module_4_homework/users/not-an-email
+```
+http://localhost:8025
 ```
