@@ -9,7 +9,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import ru.aston.hometask.listener.dto.UserEvent;
 import ru.aston.hometask.listener.dto.UserEventType;
@@ -21,10 +23,14 @@ public class UserEventListenerImpl implements UserEventListener {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true);
-    private final List<UserEventHandler> handlers;
+    private final Map<UserEventType, UserEventHandler> handlers;
 
     public UserEventListenerImpl(List<UserEventHandler> handlers) {
-        this.handlers = handlers;
+        this.handlers = handlers.stream()
+                .collect(Collectors.toMap(
+                        UserEventHandler::getUserEventType,
+                        handler -> handler
+                ));
     }
 
     @Override
@@ -34,9 +40,7 @@ public class UserEventListenerImpl implements UserEventListener {
             UserEvent event = objectMapper.readValue(message, UserEvent.class);
 
             // Рефактор по Борисову: https://youtu.be/61duchvKI6o?t=2240
-            UserEventHandler handler = handlers.stream().filter(
-                    h -> h.getUserEventType() == event.event())
-                    .findFirst().orElseThrow();
+            UserEventHandler handler = handlers.get(event.event());
             handler.handleEvent(event);
 
         } catch (JsonProcessingException e) {
