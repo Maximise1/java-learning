@@ -79,6 +79,7 @@ public class UserServiceImpl implements UserService {
         saveEvent(email, UserEventType.DELETE.name());
     }
 
+    @Transactional
     private void saveEvent(String email, String type) {
         UserEvent event = new UserEvent(email, type);
         try {

@@ -15,12 +15,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MediaType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -31,28 +34,20 @@ import ru.aston.hometask.exceptions.UserNotFoundException;
 import ru.aston.hometask.service.dto.UserDto;
 import ru.aston.hometask.service.UserService;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(UserController.class)
 public class UserControllerTest {
+    @Autowired
     private MockMvc mockMvc;
+    @Autowired
     private ObjectMapper objectMapper;
-    @Mock
+    @MockitoBean
     private UserService userService;
-    @InjectMocks
-    private UserController userController;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(userController)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-    }
 
     @Test
     void when_createUserCalled_then_returns201() throws Exception {
         UserDto dto = new UserDto("test@mail.com", 25, "Имя");
+
+        when(userService.createUser(any(UserDto.class))).thenReturn(dto);
 
         mockMvc.perform(post("/users")
                 .contentType(String.valueOf(MediaType.APPLICATION_JSON))
@@ -78,9 +73,11 @@ public class UserControllerTest {
     void when_updateUserCalled_then_returns200() throws Exception {
         UserDto dto = new UserDto("test@mail.com", 25, "Name", LocalDateTime.now());
 
+        when(userService.updateUser(any(String.class), any(UserDto.class))).thenReturn(dto);
+
         mockMvc.perform(put("/users/test@mail.com")
-                        .contentType(String.valueOf(MediaType.APPLICATION_JSON))
-                        .content(objectMapper.writeValueAsString(dto)))
+                .contentType(String.valueOf(MediaType.APPLICATION_JSON))
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
         verify(userService).updateUser(eq("test@mail.com"), any(UserDto.class));

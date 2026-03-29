@@ -1,11 +1,22 @@
-datasource:
-  url: jdbc:postgresql://localhost:5432/mydb
-  username: postgres
-  password: veryHardPassword
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: postgres
+    password: veryHardPassword
 
-hibernate:
-  ddl:
-    auto: create
+  jpa:
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
 
-kafka:
-  bootstrap-servers: localhost:9092
+  kafka:
+    bootstrap-servers: localhost:9092
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+server:
+  port: 8080

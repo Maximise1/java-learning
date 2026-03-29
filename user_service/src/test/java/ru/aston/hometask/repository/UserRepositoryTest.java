@@ -6,31 +6,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import jakarta.transaction.Transactional;
-import ru.aston.hometask.config.PersistenceConfig;
 import ru.aston.hometask.repository.model.User;
 
+@DataJpaTest
 @Testcontainers
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(
-        classes = {PersistenceConfig.class},
-        initializers = UserRepositoryTest.ApplicationContextDatabaseContainerInitializer.class
-)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional
 public class UserRepositoryTest {
 
@@ -39,30 +31,17 @@ public class UserRepositoryTest {
             .withDatabaseName("test-db")
             .withUsername("test")
             .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+    }
+
     @Autowired
     private UserRepository userRepository;
-
-    static class ApplicationContextDatabaseContainerInitializer
-            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-        @Override
-        public void initialize(ConfigurableApplicationContext ctx) {
-            postgres.start();
-
-            Map<String, Object> props = new HashMap<>();
-            props.put("datasource.url", postgres.getJdbcUrl());
-            props.put("datasource.username", postgres.getUsername());
-            props.put("datasource.password", postgres.getPassword());
-            props.put("hibernate.ddl.auto", "create-drop");
-
-            MapPropertySource propertySource =
-                    new MapPropertySource("testcontainers", props);
-
-            ctx.getEnvironment()
-                    .getPropertySources()
-                    .addFirst(propertySource);
-        }
-    }
 
     @Test
     void when_createCalled_then_shouldSaveUser() {

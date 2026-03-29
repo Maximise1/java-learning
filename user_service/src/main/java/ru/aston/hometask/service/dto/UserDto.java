@@ -1,11 +1,13 @@
 package ru.aston.hometask.service.dto;
 
+import org.springframework.hateoas.RepresentationModel;
+
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 import ru.aston.hometask.exceptions.UserValidationException;
 
-public class UserDto {
+public class UserDto extends RepresentationModel<UserDto> {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     private String mail;
