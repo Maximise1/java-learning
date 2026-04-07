@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,14 +22,16 @@ import java.util.concurrent.TimeUnit;
 @EmbeddedKafka(partitions = 1, topics = "user-events")
 @TestPropertySource(properties = {
         "spring.kafka.consumer.group-id=test-group",
-        "spring.kafka.consumer.auto-offset-reset=earliest"
+        "spring.kafka.consumer.auto-offset-reset=earliest",
+        "eureka.client.enabled=false",
+        "spring.cloud.config.import-check.enabled=false"
 })
 public class UserEventListenerTest {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    @MockBean
+    @MockitoBean
     private JavaMailSender mailSender;
 
     @Test

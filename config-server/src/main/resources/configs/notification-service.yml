@@ -1,0 +1,9 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: user-email-group
+      auto-offset-reset: earliest
+  mail:
+    host: mailhog
+    port: 1025

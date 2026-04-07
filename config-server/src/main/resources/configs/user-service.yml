@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/mydb
+    username: postgres
+    password: veryHardPassword
+  jpa:
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+  kafka:
+    bootstrap-servers: kafka:9092
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+server:
+  port: 8081
