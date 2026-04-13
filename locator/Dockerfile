@@ -1,9 +1,20 @@
-FROM eclipse-temurin:21-jdk-alpine
-
+# ---- Build stage ----
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Copy jar file
-COPY build/libs/locator-0.0.1-SNAPSHOT.jar app.jar
+# Copy gradle files first for dependency caching
+COPY gradlew .
+COPY gradle/ gradle/
+COPY build.gradle* .
+COPY settings.gradle* .
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
 
-# Run app
+# Copy source and build
+COPY src/ src/
+RUN ./gradlew bootJar --no-daemon -x test
+
+# ---- Run stage ----
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/build/libs/locator-0.0.1-SNAPSHOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
